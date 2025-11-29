@@ -22,11 +22,16 @@ jobs:
       - name: Flutter Pub Get
         run: flutter pub get
 
-      # 4️⃣ Update CocoaPods repo (to avoid pod errors)
-      - name: Update CocoaPods Repo
+      # 4️⃣ Update CocoaPods repo and force iOS 15 platform
+      - name: Update CocoaPods Repo & Fix Podfile iOS Version
         run: |
           sudo gem install cocoapods
           pod repo update
+          # Ensure Podfile uses iOS 15
+          PODFILE="ios/Podfile"
+          if ! grep -q "platform :ios, '15.0'" "$PODFILE"; then
+            sed -i '' "1iplatform :ios, '15.0'" "$PODFILE"
+          fi
         working-directory: ios
 
       # 5️⃣ Build iOS app without codesigning
