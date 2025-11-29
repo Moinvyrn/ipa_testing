@@ -7,6 +7,7 @@ jobs:
   build-ios:
     name: 🎉 iOS Build
     runs-on: macos-latest
+
     steps:
       - uses: actions/checkout@v3
 
@@ -14,9 +15,16 @@ jobs:
         with:
           channel: 'stable'
           architecture: x64
-      - run: flutter pub get
-      
 
+      - run: flutter pub get
+
+      # 🔧 FIX: Set iOS Deployment Target to 15.0
+      - name: Set iOS Deployment Target
+        run: |
+          cd ios
+          sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*/IPHONEOS_DEPLOYMENT_TARGET = 15.0/g' Runner.xcodeproj/project.pbxproj
+
+      # This will generate Podfile + run pod install automatically
       - run: pod repo update
         working-directory: ios
 
