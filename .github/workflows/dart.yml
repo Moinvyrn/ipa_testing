@@ -13,27 +13,36 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          channel: stable
           architecture: x64
 
       - run: flutter pub get
 
-      # 🔧 FIX: Set iOS Deployment Target to 15.0
-      - name: Set iOS Deployment Target
+      # Step 1: Generate iOS folders + Podfile
+      - name: First iOS build (generate Podfile)
+        run: flutter build ios --release --no-codesign || true
+
+      # Step 2: Update deployment target to iOS 15
+      - name: Set iOS Deployment Target to 15
         run: |
           cd ios
           sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*/IPHONEOS_DEPLOYMENT_TARGET = 15.0/g' Runner.xcodeproj/project.pbxproj
 
-      # This will generate Podfile + run pod install automatically
-      - run: pod repo update
-        working-directory: ios
+      # Step 3: Install pods AFTER fixing deployment target
+      - name: Install CocoaPods
+        run: |
+          cd ios
+          pod install --repo-update
 
-      - run: flutter build ios --release --no-codesign
+      # Step 4: Final Flutter build (now clean)
+      - name: Final iOS Build
+        run: flutter build ios --release --no-codesign
 
+      # Step 5: Package IPA
       - run: mkdir Payload
         working-directory: build/ios/iphoneos
 
-      - run: mv Runner.app/ Payload
+      - run: mv Runner.app Payload/
         working-directory: build/ios/iphoneos
 
       - name: Zip output
